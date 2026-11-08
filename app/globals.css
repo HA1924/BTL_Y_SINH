@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --color-navy-950: #0b1224;
+  --color-navy-900: #111a33;
+  --color-navy-800: #1b2747;
+  --color-brand: #2f6bff;
+  --color-page: #f1f5fb;
+}
+
+body {
+  background: linear-gradient(180deg, #f6f8fd 0%, var(--color-page) 100%) fixed;
+  color: #0f172a;
+}
