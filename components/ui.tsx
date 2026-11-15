@@ -7,10 +7,10 @@ export function Logo({ h }: { h: number }) {
   return (
     <span className="inline-flex shrink-0 rounded-[10px] bg-white p-1 shadow-sm">
       <Image
-        src="/logo.jpg"
+        src="/logo.png"
         alt="Đại học Giao thông Vận tải"
-        width={800}
-        height={566}
+        width={1273}
+        height={1273}
         unoptimized // serve the original file: no recompression, stays sharp at 2x/3x
         style={{ height: h, width: "auto" }}
       />

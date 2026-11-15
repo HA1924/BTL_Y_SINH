@@ -17,6 +17,6 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  // Mọi thứ trừ asset build và file tĩnh trong public/ (logo.jpg, favicon)
-  matcher: ["/((?!_next/static|_next/image|favicon\\.ico|logo\\.jpg).*)"],
+  // Mọi thứ trừ asset build và file tĩnh trong public/ (logo, favicon)
+  matcher: ["/((?!_next/static|_next/image|favicon\\.ico|logo\\.(?:png|jpg)).*)"],
 };

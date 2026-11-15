@@ -35,7 +35,7 @@ Next.js 16 (App Router, TypeScript) · Tailwind v4 · Recharts · exceljs · tsx
 - Bám template trong `design/` (anh1 = dashboard, anh2 = xuất dữ liệu, anh3 = cảnh báo). Không tự đổi bố cục, màu hay font.
   - Màu: header và sidebar navy `#0b1224`, nút xanh `#2f6bff`, nền trang `#f1f5fb`.
   - Thẻ trắng bo góc 20px, font Plus Jakarta Sans.
-- Logo: dùng nguyên file `public/logo.jpg` (không sửa, không cắt), đặt trong khung trắng bo góc, hiển thị bằng `next/image`.
+- Logo: dùng nguyên file `public/logo.png` (chép từ `design/UTC logo.png`) (không sửa, không cắt), đặt trong khung trắng bo góc, hiển thị bằng `next/image`.
   - Cao 40px trên header, 80px trên trang login. Ở 375px ẩn tên trường.
 - Toàn bộ chữ trên giao diện bằng tiếng Việt.
 - Dòng chú thích cố định "Thiết bị phục vụ học tập, không dùng để chẩn đoán y tế."

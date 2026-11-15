@@ -68,7 +68,7 @@ git status
 | `web/data/` | Dữ liệu đo trên máy bạn |
 | `web/.claude/` | Cấu hình riêng của Claude Code |
 
-**Nên có:** `web/.env.example`, `web/.gitignore`, `web/app/`, `web/lib/`, `web/components/`, `web/scripts/`, `web/public/logo.jpg`, `web/design/`, `web/package.json`, `web/package-lock.json`, `web/README.md`, `web/RUN.md`, `web/GIT.md`, `web/AGENTS.md`.
+**Nên có:** `web/.env.example`, `web/.gitignore`, `web/app/`, `web/lib/`, `web/components/`, `web/scripts/`, `web/public/logo.png`, `web/design/`, `web/package.json`, `web/package-lock.json`, `web/README.md`, `web/RUN.md`, `web/GIT.md`, `web/AGENTS.md`.
 
 Nếu lỡ thấy `.env.local` trong danh sách:
 ```powershell
