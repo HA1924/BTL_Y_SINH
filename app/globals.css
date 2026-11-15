@@ -13,3 +13,14 @@ body {
   background: linear-gradient(180deg, #f6f8fd 0%, var(--color-page) 100%) fixed;
   color: #0f172a;
 }
+
+/* Bản in (phiếu kết quả): khổ A4, nền trắng. Dòng chú thích cố định ở chân trang vẫn được in. */
+@page {
+  size: A4;
+  margin: 12mm;
+}
+@media print {
+  body {
+    background: #fff;
+  }
+}

@@ -69,6 +69,13 @@ npm run mock -- --backfill=7
 
 Bạn sẽ nhận file `spo2_YYYYMMDD-YYYYMMDD.xlsx` gồm 2 sheet "Du lieu" và "Canh bao", thời gian theo giờ Việt Nam.
 
+### In phiếu kết quả (PDF)
+
+1. Vào trang **Phiếu kết quả**.
+2. Chọn thời gian **Từ** và **Đến** (tối đa 24 giờ), điền họ tên, tuổi, giới tính người đo nếu muốn.
+3. Bấm **Tạo phiếu**, rồi **In phiếu / Lưu PDF**.
+4. Trong hộp thoại in, chọn máy in **Lưu thành PDF** (Save as PDF), khổ A4.
+
 ## 5. Kết nối ESP32 thật
 
 1. Máy tính và ESP32 phải dùng **cùng một mạng WiFi**.

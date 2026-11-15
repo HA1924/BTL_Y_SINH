@@ -14,8 +14,9 @@ Next.js 16 (App Router, TypeScript) · Tailwind v4 · Recharts · exceljs · tsx
 - `lib/auth.ts`: interface `Auth`. Một tài khoản lấy từ env; phiên lưu trong cookie httpOnly ký HMAC (Web Crypto), hết hạn sau 7 ngày.
 - `lib/format.ts`: helper dùng được ở client: giờ VN, nhãn cảnh báo.
 - `proxy.ts`: chặn mọi trang và API khi chưa đăng nhập, trừ `/login`, `/api/auth/login`, `/api/ingest`, file tĩnh.
-- `app/(app)/`: các trang `/` (Theo dõi), `/alerts`, `/export`. Trang `app/login/` nằm riêng.
-- `app/api/`: `ingest`, `auth/login`, `auth/logout`, `latest`, `readings?range=1h|24h`, `alerts`, `export?from&to`.
+- `app/(app)/`: các trang `/` (Theo dõi), `/alerts`, `/export`, `/report` (phiếu kết quả, in ra PDF bằng lệnh in của trình duyệt). Trang `app/login/` nằm riêng.
+- `app/api/`: `ingest`, `auth/login`, `auth/logout`, `latest`, `readings?range=1h|24h`, `alerts`, `export?from&to`, `report?from&to` (ISO8601, tối đa 24 giờ).
+- Phiếu kết quả: chỉ logo trường, không có mục kết luận y khoa, thông tin người đo không lưu; ghi "Sinh viên thực hiện: Dương Hoàng Anh, Phạm Đức Hảo". Kế hoạch tiếp theo xem `PLAN_2.0.md`.
 - `scripts/mock-device.ts` (`npm run mock`, `--backfill=7`), `scripts/selftest.ts` (`npm run selftest`).
 
 ## Quy tắc nghiệp vụ

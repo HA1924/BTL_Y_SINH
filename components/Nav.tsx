@@ -6,12 +6,13 @@ const ITEMS = [
   { href: "/", label: "Theo dõi", icon: "❤️" },
   { href: "/alerts", label: "Cảnh báo", icon: "🚨" },
   { href: "/export", label: "Xuất dữ liệu", icon: "📊" },
+  { href: "/report", label: "Phiếu kết quả", icon: "🧾" },
 ];
 
 export function Nav() {
   const path = usePathname();
   return (
-    <nav className="bg-navy-950 lg:sticky lg:top-16 lg:h-[calc(100dvh-4rem)] lg:w-64 lg:shrink-0 lg:bg-gradient-to-b lg:from-navy-950 lg:to-navy-900">
+    <nav className="bg-navy-950 print:hiddenlg:sticky lg:top-16 lg:h-[calc(100dvh-4rem)] lg:w-64 lg:shrink-0 lg:bg-gradient-to-b lg:from-navy-950 lg:to-navy-900">
       <p className="hidden px-6 pb-2 pt-6 text-xs font-bold uppercase tracking-[0.16em] text-slate-500 lg:block">Theo dõi</p>
       <ul className="flex gap-2 overflow-x-auto px-4 pb-3 pt-1 lg:flex-col lg:px-4 lg:py-0">
         {ITEMS.map((it) => {
