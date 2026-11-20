@@ -76,6 +76,16 @@ Bạn sẽ nhận file `spo2_YYYYMMDD-YYYYMMDD.xlsx` gồm 2 sheet "Du lieu" và
 3. Bấm **Tạo phiếu**, rồi **In phiếu / Lưu PDF**.
 4. Trong hộp thoại in, chọn máy in **Lưu thành PDF** (Save as PDF), khổ A4.
 
+### Thu dữ liệu hiệu chuẩn SpO₂
+
+Cần thiết bị chạy firmware có gửi `r` và một máy đo SpO₂ mua sẵn làm tham chiếu.
+
+1. Mở trang **Hiệu chuẩn**. Có thể mở trên điện thoại cùng WiFi: `http://<IP-laptop>:3000/calibration`.
+2. Kẹp máy tham chiếu và cảm biến của nhóm vào hai ngón cạnh nhau, ngồi yên.
+3. Khi trang báo **Sẵn sàng lưu**, nhập mã người đo (ví dụ `N01`), số SpO₂ (và PR nếu muốn) đang hiện trên máy tham chiếu, bấm **Lưu điểm**.
+4. Mỗi người khoảng 10–15 điểm, cách nhau khoảng 20 giây; đổi ngón tay giữa các điểm. Mục tiêu khoảng 100 điểm từ 8–10 người.
+5. Bấm **Tải CSV** để lấy dữ liệu cho bước huấn luyện. Dữ liệu nằm trong `data\calibration.ndjson`.
+
 ## 5. Kết nối ESP32 thật
 
 1. Máy tính và ESP32 phải dùng **cùng một mạng WiFi**.

@@ -5,6 +5,7 @@ import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Too
 import type { Alert, Reading } from "@/lib/store";
 import { fmtTimeVN, fmtVN } from "@/lib/format";
 import { AlertList } from "@/components/AlertList";
+import { PpgWave } from "@/components/PpgWave";
 import { Badge, PageTitle, SectionLabel, card, usePoll } from "@/components/ui";
 
 type Point = { t: number; pr: number | null; spo2: number | null };
@@ -106,6 +107,9 @@ export default function Dashboard() {
           />
         </div>
       </div>
+
+      <SectionLabel>Sóng mạch</SectionLabel>
+      <PpgWave />
 
       <SectionLabel>Biểu đồ</SectionLabel>
       <section className={`${card} p-4 sm:p-5`}>

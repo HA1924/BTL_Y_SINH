@@ -17,6 +17,8 @@ type Reading = {
   battery_pct: number;
   signal_quality: number;
   finger: boolean;
+  r: number;
+  pi: number;
 };
 
 const jitter = (n: number) => (Math.random() - 0.5) * 2 * n;
@@ -41,6 +43,9 @@ function make(i: number, ms: number, batteryPct: number): Reading {
     battery_pct: Math.max(0, Math.round(batteryPct)),
     signal_quality: finger ? round1(0.75 + jitter(0.2)) : 0,
     finger,
+    // R ngược từ công thức firmware SpO₂ = 110 − 25R, cộng nhiễu nhỏ
+    r: finger ? Math.round(((110 - Math.min(100, spo2)) / 25 + jitter(0.01)) * 10000) / 10000 : 0,
+    pi: finger ? round1(1.8 + jitter(0.6)) : 0,
   };
 }
 
@@ -80,8 +85,9 @@ async function backfill(days: number) {
 async function live() {
   console.log(`Gửi 1 bản ghi / 5 giây tới ${BASE}/api/ingest (Ctrl+C để dừng)`);
   let i = 0, battery = 26; // bắt đầu gần ngưỡng để thấy cảnh báo pin yếu sau ~3 phút
+  let cur: Reading | null = null;
   const tick = async () => {
-    const r = make(i++, Date.now(), battery);
+    const r = (cur = make(i++, Date.now(), battery));
     battery = battery <= 5 ? 100 : battery - 0.15;
     try {
       await send(r);
@@ -92,6 +98,25 @@ async function live() {
   };
   await tick();
   setInterval(tick, STEP_MS);
+
+  // Sóng PPG giả 25 Hz, gửi mỗi giây tới /api/wave theo nhịp PR hiện tại
+  const FS = 25;
+  let phase = 0;
+  setInterval(async () => {
+    if (!cur?.finger) return;
+    const s: number[] = [];
+    for (let k = 0; k < FS; k++) {
+      phase = (phase + cur.pr / 60 / FS) % 1;
+      // đỉnh tâm thu + khấc mạch đôi
+      const v = Math.exp(-(((phase - 0.15) / 0.07) ** 2)) + 0.35 * Math.exp(-(((phase - 0.45) / 0.1) ** 2));
+      s.push(Math.round(v * 800 + jitter(25)));
+    }
+    await fetch(`${BASE}/api/wave`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Device-Key": KEY },
+      body: JSON.stringify({ device_id: cur.device_id, fs: FS, s }),
+    }).catch(() => {});
+  }, 1000);
 }
 
 const days = Number(arg("backfill"));

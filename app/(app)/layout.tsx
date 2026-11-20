@@ -4,7 +4,7 @@ import { Nav } from "@/components/Nav";
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <header className="sticky top-0 z-20 print:hiddenborder-b border-white/10 bg-navy-950 text-white">
+      <header className="sticky top-0 z-20 print:hidden border-b border-white/10 bg-navy-950 text-white">
         <div className="flex h-16 items-center gap-3 px-4 lg:px-6">
           <Logo h={40} />
           <div className="min-w-0">

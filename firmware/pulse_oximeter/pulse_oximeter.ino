@@ -8,6 +8,7 @@
 //  - SpO2 = 110 - 25*R, R = (AC/DC)do / (AC/DC)IR  (chua hieu chuan)
 //
 // Gui du lieu chay o task rieng tren core 0 de HTTP khong lam roi mau o loop() (core 1).
+// Ngoai ra moi 1 s gui goi song PPG 25 Hz toi /api/wave (cung host voi SERVER_URL) de web ve song mach.
 //
 // Thu vien: "GFX Library for Arduino", "SparkFun MAX3010x Pulse and Proximity Sensor Library"
 // (WiFi, HTTPClient co san trong ESP32 core)
@@ -42,6 +43,8 @@ const float BAT_EMPTY_V = 3.30f;   // 0 %
 const float BAT_FULL_V  = 4.20f;   // 100 %
 
 const uint32_t SEND_INTERVAL_MS = 5000;
+const uint32_t WAVE_INTERVAL_MS = 1000;   // goi song PPG len web moi 1 s
+const int      WAVE_DECIM       = 2;      // 50 Hz -> 25 Hz
 
 // ================== Mau (RGB565) ==================
 const uint16_t C_BLACK   = 0x0000;
@@ -89,9 +92,15 @@ int waveYPrev = WAVE_TOP + WAVE_H / 2;
 float waveEnv = 50;
 
 // ================== Du lieu chia se cho task gui ==================
-struct Snapshot { bool valid; int pr; int spo2; float quality; };
+struct Snapshot { bool valid; int pr; int spo2; float quality; float r; float pi; };
 Snapshot snap = {false, 0, 0, 0};
 portMUX_TYPE snapMux = portMUX_INITIALIZER_UNLOCKED;
+
+// Song PPG cho the "Song mach" tren web: loop() ghi, netTask doc va gui moi giay.
+const int WAVE_CAP = 64;                 // ~2,5 s o 25 Hz; day thi bo phan cu
+int16_t waveBuf[WAVE_CAP];
+int waveCount = 0;
+portMUX_TYPE waveMux = portMUX_INITIALIZER_UNLOCKED;
 volatile int netState = 0;   // 0 = chua WiFi, 1 = WiFi ok, 2 = gui ok, 3 = gui loi
 
 // ================== Ve so kieu 7 doan ==================
@@ -409,6 +418,8 @@ void updateOncePerSecond() {
   s.pr      = s.valid ? hrI : 0;
   s.spo2    = s.valid ? spI : 0;
   s.quality = s.valid ? quality : 0;
+  s.r       = s.valid ? rShow : 0;    // ty so R tho, dung de hieu chuan SpO2 (ML)
+  s.pi      = s.valid ? piShow : 0;   // chi so tuoi mau (%)
   portENTER_CRITICAL(&snapMux);
   snap = s;
   portEXIT_CRITICAL(&snapMux);
@@ -446,12 +457,13 @@ void sendReading() {
 
   float bv = readBatteryV();
   if (bv > 10) bv = 10;
-  char body[256];
+  char body[320];
   snprintf(body, sizeof(body),
            "{\"device_id\":\"%s\",\"ts\":\"%s\",\"pr\":%d,\"spo2\":%d,"
-           "\"battery_v\":%.2f,\"battery_pct\":%d,\"signal_quality\":%.2f,\"finger\":%s}",
+           "\"battery_v\":%.2f,\"battery_pct\":%d,\"signal_quality\":%.2f,\"finger\":%s,"
+           "\"r\":%.4f,\"pi\":%.2f}",
            DEVICE_ID, ts, s.pr, s.spo2, bv, batteryPct(bv), s.quality,
-           s.valid ? "true" : "false");
+           s.valid ? "true" : "false", s.r, s.pi);
 
   HTTPClient http;
   http.setTimeout(4000);
@@ -466,6 +478,45 @@ void sendReading() {
   if (code == 401) Serial.println("[net] sai DEVICE_KEY");
 }
 
+// Goi 1 mau song (cung tin hieu ve tren LCD: -lpIr) vao bo dem, giam con 25 Hz.
+void pushWaveSample() {
+  static int decim = 0;
+  if (++decim < WAVE_DECIM) return;
+  decim = 0;
+  float v = constrain(-lpIr, -32000.0f, 32000.0f);
+  portENTER_CRITICAL(&waveMux);
+  if (waveCount >= WAVE_CAP) waveCount = 0;   // mang cham: bo phan cu, web tu noi lai
+  waveBuf[waveCount++] = (int16_t)lroundf(v);
+  portEXIT_CRITICAL(&waveMux);
+}
+
+void sendWave() {
+  int16_t s[WAVE_CAP];
+  int n;
+  portENTER_CRITICAL(&waveMux);
+  n = waveCount;
+  memcpy(s, waveBuf, n * sizeof(int16_t));
+  waveCount = 0;
+  portEXIT_CRITICAL(&waveMux);
+  if (n == 0 || !finger) return;   // khong co ngon tay thi khong gui
+
+  char body[600];
+  int len = snprintf(body, sizeof(body), "{\"device_id\":\"%s\",\"fs\":%d,\"s\":[", DEVICE_ID, FS / WAVE_DECIM);
+  for (int i = 0; i < n && len < (int)sizeof(body) - 10; i++) len += snprintf(body + len, sizeof(body) - len, i ? ",%d" : "%d", s[i]);
+  len += snprintf(body + len, sizeof(body) - len, "]}");
+
+  String url = SERVER_URL;
+  url.replace("/api/ingest", "/api/wave");   // cung may chu, khong can them cau hinh
+  HTTPClient http;
+  http.setTimeout(1500);
+  if (!http.begin(url)) return;
+  http.addHeader("Content-Type", "application/json");
+  http.addHeader("X-Device-Key", DEVICE_KEY);
+  int code = http.POST((uint8_t *)body, len);
+  http.end();
+  if (code != 204) Serial.printf("[wave] POST %d\n", code);
+}
+
 void netTask(void *) {
   WiFi.mode(WIFI_STA);
   WiFi.setAutoReconnect(true);
@@ -473,6 +524,7 @@ void netTask(void *) {
   configTime(0, 0, "pool.ntp.org", "time.google.com");   // gio UTC, web tu doi sang gio VN
 
   uint32_t next = millis();
+  uint32_t nextWave = millis();
   for (;;) {
     if (WiFi.status() != WL_CONNECTED) {
       netState = 0;
@@ -487,6 +539,10 @@ void netTask(void *) {
       next += SEND_INTERVAL_MS;
       if ((int32_t)(millis() - next) >= 0) next = millis() + SEND_INTERVAL_MS;   // tre qua thi bat lai nhip
       sendReading();
+    }
+    if ((int32_t)(millis() - nextWave) >= 0) {
+      nextWave = millis() + WAVE_INTERVAL_MS;
+      sendWave();
     }
     vTaskDelay(pdMS_TO_TICKS(50));
   }
@@ -547,6 +603,7 @@ void loop() {
 
       pushSample(red, ir);
       plotWave();
+      pushWaveSample();
       detectBeat();
 
       if (++samplesSinceCalc >= FS) {

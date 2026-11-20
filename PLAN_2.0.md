@@ -33,6 +33,8 @@ Tài liệu này là kế hoạch, chưa có phần nào được code. Các m�
 
 ## 3. Các bước làm phương án A — hiệu chuẩn SpO₂
 
+> **Trạng thái:** A1 và A2 đã làm (firmware gửi `r`, `pi`; trang `/calibration` thu điểm và xuất CSV). Đã có máy tham chiếu. Việc tiếp theo: thu dữ liệu 8–10 người, sau đó làm A3.
+
 ### Bước A1. Gửi thêm `R` lên web
 - Firmware đã tính sẵn `R` (và chỉ số tưới máu `pi`) nhưng chưa gửi.
 - Thêm 2 trường **tùy chọn** vào payload: `"r": number`, `"pi": number`.

@@ -14,6 +14,9 @@ function validate(b: Record<string, unknown>): string | null {
   if (!num(b.battery_v, 0, 10)) return "battery_v không hợp lệ";
   if (!num(b.battery_pct, 0, 100)) return "battery_pct ngoài khoảng 0–100";
   if (!num(b.signal_quality, 0, 1)) return "signal_quality ngoài khoảng 0–1";
+  // Tùy chọn (firmware từ bản hiệu chuẩn): tỉ số R và chỉ số tưới máu PI
+  if (b.r !== undefined && !num(b.r, 0, 5)) return "r ngoài khoảng 0–5";
+  if (b.pi !== undefined && !num(b.pi, 0, 100)) return "pi ngoài khoảng 0–100";
   return null;
 }
 
@@ -41,6 +44,8 @@ export async function POST(req: Request) {
     battery_pct: b.battery_pct as number,
     signal_quality: b.signal_quality as number,
     finger: b.finger as boolean,
+    ...(b.r !== undefined && { r: b.r as number }),
+    ...(b.pi !== undefined && { pi: b.pi as number }),
   };
   await store.addReading(r);
   return Response.json({ ok: true }, { status: 201 });

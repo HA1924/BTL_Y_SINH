@@ -16,6 +16,8 @@ Next.js 16 (App Router, TypeScript) · Tailwind v4 · Recharts · exceljs · tsx
 - `proxy.ts`: chặn mọi trang và API khi chưa đăng nhập, trừ `/login`, `/api/auth/login`, `/api/ingest`, file tĩnh.
 - `app/(app)/`: các trang `/` (Theo dõi), `/alerts`, `/export`, `/report` (phiếu kết quả, in ra PDF bằng lệnh in của trình duyệt). Trang `app/login/` nằm riêng.
 - `app/api/`: `ingest`, `auth/login`, `auth/logout`, `latest`, `readings?range=1h|24h`, `alerts`, `export?from&to`, `report?from&to` (ISO8601, tối đa 24 giờ).
+- Sóng mạch PPG trực tiếp: firmware POST `/api/wave` mỗi giây (`X-Device-Key`, `{fs:25, s:[...]}`, trả 204); `lib/wave.ts` chỉ giữ ~20 giây trong RAM, không ghi file; `components/PpgWave.tsx` vẽ canvas, phát lại trễ 1,5 giây. Proxy cho POST `/api/wave` đi qua không cần đăng nhập, GET thì cần.
+- `/calibration` + `app/api/calibration` (GET, `?format=csv`, POST, DELETE `?id=`): thu điểm hiệu chuẩn, lưu ở `data/calibration.ndjson`. Chỉ cho lưu khi `lib/calibration.ts` `summarizeWindow()` báo sẵn sàng (trực tuyến, có ngón tay, ≥ 2 bản ghi có `r`, chất lượng ≥ 0,5, R dao động ≤ 10% trong 15 giây).
 - Phiếu kết quả: chỉ logo trường, không có mục kết luận y khoa, thông tin người đo không lưu; ghi "Sinh viên thực hiện: Dương Hoàng Anh, Phạm Đức Hảo". Kế hoạch tiếp theo xem `PLAN_2.0.md`.
 - `scripts/mock-device.ts` (`npm run mock`, `--backfill=7`), `scripts/selftest.ts` (`npm run selftest`).
 
@@ -23,6 +25,7 @@ Next.js 16 (App Router, TypeScript) · Tailwind v4 · Recharts · exceljs · tsx
 - ESP32 gửi `POST /api/ingest` mỗi 5 giây, header `X-Device-Key`. Payload: `device_id, ts (ISO8601), pr, spo2, battery_v, battery_pct, signal_quality (0–1), finger`.
   - Sai khóa trả 401, dữ liệu sai trả 400.
   - Kiểm tra pr 30–220 và spo2 70–100 chỉ khi `finger=true`.
+  - Trường tùy chọn `r` (0–5, tỉ số R thô) và `pi` (0–100, %) dùng cho hiệu chuẩn SpO₂ bằng hồi quy tuyến tính (PLAN_2.0.md, phương án A).
 - Trực tuyến nghĩa là có bản ghi trong 15 giây gần nhất.
 - Các loại cảnh báo:
   - SpO₂ < 92% hoặc PR ngoài 50–120, kéo dài trên 10 giây.

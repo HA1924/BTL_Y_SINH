@@ -10,6 +10,8 @@ export type Reading = {
   battery_pct: number;
   signal_quality: number;
   finger: boolean;
+  r?: number; // tỉ số R thô (bản ghi cũ không có)
+  pi?: number; // chỉ số tưới máu, %
 };
 
 export type AlertType = "spo2_low" | "pr_abnormal" | "battery_low" | "offline";
@@ -21,11 +23,30 @@ export type Alert = {
   value: string;
 };
 
+/** Một điểm hiệu chuẩn: số của máy tham chiếu ghép với số đo trung bình của thiết bị cùng lúc. */
+export type CalPoint = {
+  id: string;
+  ts: string; // lúc lưu
+  subject: string; // mã người đo
+  note: string; // ngón, tay ấm/lạnh...
+  ref_spo2: number;
+  ref_pr: number | null;
+  r: number;
+  pi: number | null;
+  dev_spo2: number;
+  dev_pr: number;
+  quality: number;
+  n: number; // số bản ghi đã lấy trung bình
+};
+
 export interface Store {
   addReading(r: Reading): Promise<void>;
   getLatest(): Promise<Reading | null>;
   getRange(from: Date, to: Date): Promise<Reading[]>;
   getAlerts(from: Date, to: Date): Promise<Alert[]>;
+  addCalPoint(p: CalPoint): Promise<void>;
+  listCalPoints(): Promise<CalPoint[]>;
+  deleteCalPoint(id: string): Promise<boolean>;
 }
 
 export const ONLINE_WINDOW_MS = 15_000;
@@ -110,8 +131,18 @@ function fmtDur(ms: number) {
 /** Local implementation: append-only NDJSON file + in-memory sorted index. */
 class LocalStore implements Store {
   private rows: Reading[] = [];
+  private cal: CalPoint[] = [];
+  private calFile: string;
   constructor(private file: string) {
     fs.mkdirSync(path.dirname(file), { recursive: true });
+    this.calFile = path.join(path.dirname(file), "calibration.ndjson");
+    if (fs.existsSync(this.calFile)) {
+      for (const line of fs.readFileSync(this.calFile, "utf8").split("\n")) {
+        try {
+          if (line.trim()) this.cal.push(JSON.parse(line));
+        } catch {}
+      }
+    }
     if (fs.existsSync(file)) {
       for (const line of fs.readFileSync(file, "utf8").split("\n")) {
         if (!line.trim()) continue;
@@ -154,8 +185,24 @@ class LocalStore implements Store {
   async getAlerts(from: Date, to: Date) {
     return computeAlerts(await this.getRange(from, to), Math.min(Date.now(), to.getTime()));
   }
+  async addCalPoint(p: CalPoint) {
+    fs.appendFileSync(this.calFile, JSON.stringify(p) + "\n");
+    this.cal.push(p);
+  }
+  async listCalPoints() {
+    return this.cal;
+  }
+  async deleteCalPoint(id: string) {
+    const before = this.cal.length;
+    this.cal = this.cal.filter((p) => p.id !== id);
+    if (this.cal.length === before) return false;
+    // File nhỏ (vài trăm dòng) nên ghi lại toàn bộ
+    fs.writeFileSync(this.calFile, this.cal.map((p) => JSON.stringify(p) + "\n").join(""));
+    return true;
+  }
 }
 
 // One instance per process (Next dev may load this module in several bundles).
-const g = globalThis as unknown as { __store?: Store };
-export const store: Store = (g.__store ??= new LocalStore(path.join(process.cwd(), "data", "readings.ndjson")));
+// Đổi tên khóa khi thêm hàm vào Store, để `next dev` đang chạy không giữ object cũ thiếu hàm.
+const g = globalThis as unknown as { __storeV2?: Store };
+export const store: Store = (g.__storeV2 ??= new LocalStore(path.join(process.cwd(), "data", "readings.ndjson")));
